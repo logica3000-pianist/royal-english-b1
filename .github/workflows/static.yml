@@ -1,0 +1,43 @@
+name: Publish Royal English B1
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: royal-english-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the course
+        uses: actions/checkout@v6
+      - name: Restore complete app and listening files
+        run: |
+          mkdir -p _site
+          unzip -q royal-english-core.zip -d _site
+          unzip -q royal-english-listening.zip -d _site
+          test -f _site/index.html
+          test -f _site/Royal_English_B1.pdf
+          test "$(find _site/data -name 'unit-*.json' | wc -l)" -eq 10
+          test "$(find _site/assets/audio -name '*.mp3' | wc -l)" -eq 30
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload the complete course
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Publish Royal English B1
+        id: deployment
+        uses: actions/deploy-pages@v4
